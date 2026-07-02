@@ -57,14 +57,14 @@
 
     <!-- (b) Browser download button -->
     <section class="dataset-access-card">
-      <a
-        :href="downloadUrl"
+      <button
+        type="button"
         class="dataset-access-download"
         data-testid="dataset-access-download"
-        download
+        @click="download"
       >
         {{ $t('dataset.access.download') }}
-      </a>
+      </button>
     </section>
 
     <!-- (c) Issue metadata -->
@@ -133,7 +133,19 @@ const meta = ref<DatasetMeta | null>(null);
 const preview = ref<DatasetPreview>({ columns: [], rows: [] });
 
 const apiUrl = computed(() => datasetApi.dataUrl(props.slug));
-const downloadUrl = computed(() => datasetApi.downloadUrl(props.slug));
+
+async function download(): Promise<void> {
+  // `/download` is `@require_auth` with a Bearer session token, which a plain
+  // `<a href>` navigation can't send (→ 401). Fetch the blob with the auth
+  // header, then trigger the browser download from an object-URL.
+  const { blob, filename } = await datasetApi.download(props.slug);
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
 
 // Show the caller's own keys that carry the dataset read scope so they know
 // which key to use against the scoped API URL above.

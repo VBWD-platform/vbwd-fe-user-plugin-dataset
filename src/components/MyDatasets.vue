@@ -43,14 +43,14 @@
         >
           {{ dataset.title }}
         </router-link>
-        <a
-          :href="downloadHref(dataset.slug)"
+        <button
+          type="button"
           class="my-datasets-download"
           data-testid="my-datasets-download"
-          download
+          @click="download(dataset.slug)"
         >
           {{ $t('dataset.myDatasets.download') }}
-        </a>
+        </button>
       </li>
     </ul>
 
@@ -73,10 +73,17 @@ import { datasetApi } from '../api/datasetApi';
 
 const store = useDatasetStore();
 
-function downloadHref(slug: string): string {
-  // The `last` snapshot download is session-auth (attachment) — no API key
-  // needed, so a plain browser navigation works.
-  return datasetApi.downloadUrl(slug);
+async function download(slug: string): Promise<void> {
+  // The `last` snapshot download is `@require_auth` and the session token is
+  // sent as a Bearer header, which a plain `<a href>` navigation can't carry
+  // (→ 401). Fetch the blob with the auth header, then trigger the download.
+  const { blob, filename } = await datasetApi.download(slug);
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 onMounted(() => {

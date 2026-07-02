@@ -101,4 +101,20 @@ export const datasetApi = {
   downloadUrl(slug: string): string {
     return `${API}/${slug}/download`;
   },
+  /**
+   * Fetch the `last` snapshot as a Blob. The `/download` route is
+   * `@require_auth`, but the session token lives in localStorage and is sent as
+   * a `Bearer` header — a plain `<a href>` navigation can't carry it, so it
+   * would 401. Fetch with the auth header and hand back a Blob the caller turns
+   * into an object-URL download.
+   */
+  async download(slug: string): Promise<{ blob: Blob; filename: string }> {
+    const response = await fetch(`${API}/${slug}/download`, { headers: authHeaders() });
+    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+    // Prefer the server-provided filename from Content-Disposition.
+    const disposition = response.headers.get('Content-Disposition') || '';
+    const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
+    const filename = match ? decodeURIComponent(match[1]) : slug;
+    return { blob: await response.blob(), filename };
+  },
 };

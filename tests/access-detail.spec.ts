@@ -4,6 +4,7 @@ import { mount, flushPromises, RouterLinkStub } from '@vue/test-utils';
 const mockGetMeta = vi.fn();
 const mockGetPreview = vi.fn();
 const mockFetchKeys = vi.fn();
+const mockDownload = vi.fn();
 
 vi.mock('../src/api/datasetApi', () => ({
   datasetApi: {
@@ -11,6 +12,7 @@ vi.mock('../src/api/datasetApi', () => ({
     getPreview: (...args: unknown[]) => mockGetPreview(...args),
     dataUrl: (slug: string) => `/api/v1/dataset/${slug}/data`,
     downloadUrl: (slug: string) => `/api/v1/dataset/${slug}/download`,
+    download: (...args: unknown[]) => mockDownload(...args),
   },
 }));
 
@@ -76,11 +78,26 @@ describe('DatasetAccessDetail — API URL + download + metadata + capped preview
     expect(keys[0].text()).toContain('vbwd_ab12');
   });
 
-  it('renders a browser download button pointing at the download endpoint', async () => {
+  it('downloads the snapshot as an auth-carrying blob (not a bare anchor)', async () => {
+    mockDownload.mockResolvedValue({ blob: new Blob(['a,b\n1,2']), filename: 'air-quality.csv' });
+    const createObjectURL = vi.fn(() => 'blob:mock');
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
     const wrapper = await mountAccess();
     const download = wrapper.find('[data-testid="dataset-access-download"]');
-    expect(download.attributes('href')).toBe('/api/v1/dataset/air-quality/download');
-    expect(download.attributes('download')).toBeDefined();
+    expect(download.element.tagName).toBe('BUTTON');
+    await download.trigger('click');
+    await flushPromises();
+
+    expect(mockDownload).toHaveBeenCalledWith('air-quality');
+    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+    expect(clickSpy).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock');
+
+    clickSpy.mockRestore();
+    vi.unstubAllGlobals();
   });
 
   it('renders the issue metadata block', async () => {
