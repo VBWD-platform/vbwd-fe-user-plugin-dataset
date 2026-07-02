@@ -15,8 +15,8 @@
     </h1>
 
     <!-- (0) The user's API key -->
-    <section class="dataset-access-card">
-      <h2 class="dataset-access-heading">
+    <section class="vbwd-card">
+      <h2 class="vbwd-heading">
         {{ $t('dataset.access.apiKey') }}
       </h2>
       <ul
@@ -49,16 +49,16 @@
 
     <!-- (1) API usage examples -->
     <section
-      class="dataset-access-card"
+      class="vbwd-card"
       data-testid="dataset-api-examples"
     >
-      <h2 class="dataset-access-heading">
+      <h2 class="vbwd-heading">
         {{ $t('dataset.access.examples.title') }}
       </h2>
 
       <select
         v-model="exampleLang"
-        class="dataset-examples-lang"
+        class="vbwd-select dataset-examples-lang"
         data-testid="dataset-examples-lang"
       >
         <option value="curl">
@@ -84,7 +84,7 @@
           <span class="dataset-example-label">{{ $t(operation.labelKey) }}</span>
           <button
             type="button"
-            class="dataset-example-copy"
+            class="vbwd-btn vbwd-btn--ghost vbwd-btn--sm"
             data-testid="dataset-example-copy"
             @click="copySnippet(operation.snippet)"
           >
@@ -96,10 +96,10 @@
     </section>
 
     <!-- (b) Browser download button -->
-    <section class="dataset-access-card">
+    <section class="vbwd-card">
       <button
         type="button"
-        class="dataset-access-download"
+        class="vbwd-btn vbwd-btn--primary"
         data-testid="dataset-access-download"
         @click="download"
       >
@@ -109,10 +109,10 @@
 
     <!-- (c) Downloadable archive of snapshot versions -->
     <section
-      class="dataset-access-card"
+      class="vbwd-card"
       data-testid="dataset-archive"
     >
-      <h2 class="dataset-access-heading">
+      <h2 class="vbwd-heading">
         {{ $t('dataset.access.archive.title') }}
       </h2>
 
@@ -120,13 +120,13 @@
         <input
           v-model="archiveSearch"
           type="search"
-          class="dataset-archive-search"
+          class="vbwd-input dataset-archive-search"
           data-testid="dataset-archive-search"
           :placeholder="$t('dataset.access.archive.searchPlaceholder')"
         >
         <button
           type="button"
-          class="dataset-archive-bulk"
+          class="vbwd-btn vbwd-btn--primary vbwd-btn--sm"
           data-testid="dataset-archive-bulk"
           :disabled="!selectedIds.length"
           @click="downloadSelected"
@@ -150,7 +150,7 @@
         {{ $t('dataset.access.archive.empty') }}
       </p>
       <template v-else>
-        <table class="dataset-archive-table">
+        <table class="vbwd-table dataset-archive-table">
           <thead>
             <tr>
               <th class="dataset-archive-col-select">
@@ -213,7 +213,7 @@
               <td class="dataset-archive-col-action">
                 <button
                   type="button"
-                  class="dataset-archive-download"
+                  class="vbwd-btn vbwd-btn--ghost vbwd-btn--sm"
                   data-testid="dataset-archive-download"
                   @click="downloadOne(snapshot.id)"
                 >
@@ -227,7 +227,7 @@
         <div class="dataset-archive-pager">
           <button
             type="button"
-            class="dataset-archive-page-btn"
+            class="vbwd-btn vbwd-btn--ghost vbwd-btn--sm dataset-archive-page-btn"
             data-testid="dataset-archive-prev"
             :disabled="currentPage <= 1"
             @click="goToPage(currentPage - 1)"
@@ -242,7 +242,7 @@
           </span>
           <button
             type="button"
-            class="dataset-archive-page-btn"
+            class="vbwd-btn vbwd-btn--ghost vbwd-btn--sm dataset-archive-page-btn"
             data-testid="dataset-archive-next"
             :disabled="currentPage >= totalPages"
             @click="goToPage(currentPage + 1)"
@@ -256,10 +256,10 @@
     <!-- (e) Issue metadata -->
     <section
       v-if="meta"
-      class="dataset-access-card"
+      class="vbwd-card"
       data-testid="dataset-access-meta"
     >
-      <h2 class="dataset-access-heading">
+      <h2 class="vbwd-heading">
         {{ $t('dataset.access.metadata') }}
       </h2>
       <dl class="dataset-access-meta-list">
@@ -287,8 +287,8 @@
     </section>
 
     <!-- (f) First-100-rows spreadsheet preview -->
-    <section class="dataset-access-card">
-      <h2 class="dataset-access-heading">
+    <section class="vbwd-card">
+      <h2 class="vbwd-heading">
         {{ $t('dataset.access.preview') }}
       </h2>
       <DatasetPreviewGrid
@@ -567,52 +567,41 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Structural chrome (card, heading, table, buttons, inputs) comes from the
+   shared fe-user layer `vue/src/assets/vbwd-ui.css` (.vbwd-* classes). Only
+   dataset-specific layout / accents live here. */
 .dataset-access { max-width: 900px; margin: 0 auto; }
-.dataset-access-back { display: inline-block; margin-bottom: 16px; color: #3498db; text-decoration: none; font-size: 0.9rem; }
+.dataset-access-back { display: inline-block; margin-bottom: 16px; color: var(--vbwd-primary, #3498db); text-decoration: none; font-size: 0.9rem; }
 .dataset-access-back:hover { text-decoration: underline; }
-.dataset-access-title { color: #2c3e50; margin-bottom: 20px; }
-.dataset-access-card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 18px; box-shadow: 0 2px 5px rgba(0,0,0,.05); }
-.dataset-access-heading { font-size: 1rem; color: #2c3e50; margin: 0 0 12px; }
-.dataset-access-subheading { font-size: 0.9rem; color: #6b7280; margin: 16px 0 8px; }
-.dataset-access-url { display: block; padding: 10px 12px; background: #f4f6f8; border: 1px solid #e9ecef; border-radius: 6px; font-family: monospace; font-size: 0.85rem; color: #2c3e50; word-break: break-all; }
+.dataset-access-title { color: var(--vbwd-heading, #2c3e50); margin-bottom: 20px; }
 .dataset-access-keys { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .dataset-access-keys li { display: flex; gap: 10px; align-items: center; }
-.dataset-access-key-label { font-weight: 600; color: #2c3e50; }
+.dataset-access-key-label { font-weight: 600; color: var(--vbwd-heading, #2c3e50); }
 .dataset-access-key-prefix { font-family: monospace; color: #6b7280; }
 .dataset-access-nokey { color: #9ca3af; font-style: italic; margin: 0 0 8px; }
-.dataset-access-manage-keys { display: inline-block; margin-top: 10px; color: var(--vbwd-color-primary, #3498db); text-decoration: none; font-size: 0.9rem; }
-.dataset-access-download { display: inline-block; padding: 12px 24px; background: #3498db; color: #fff; border-radius: 6px; font-weight: 600; text-decoration: none; }
-.dataset-access-download:hover { background: #2980b9; }
+.dataset-access-manage-keys { display: inline-block; margin-top: 10px; color: var(--vbwd-primary, #3498db); text-decoration: none; font-size: 0.9rem; }
 .dataset-access-meta-list { margin: 0; }
 .dataset-access-meta-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
 .dataset-access-meta-row dt { color: #6b7280; }
-.dataset-access-meta-row dd { margin: 0; color: #2c3e50; font-weight: 500; word-break: break-all; }
+.dataset-access-meta-row dd { margin: 0; color: var(--vbwd-heading, #2c3e50); font-weight: 500; word-break: break-all; }
 
 .dataset-archive-toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
-.dataset-archive-search { flex: 1; padding: 8px 10px; border: 1px solid #e9ecef; border-radius: 6px; font-size: 0.85rem; }
-.dataset-archive-bulk { padding: 8px 14px; background: #3498db; color: #fff; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer; }
-.dataset-archive-bulk:disabled { background: #cbd5e1; cursor: not-allowed; }
+.dataset-archive-search { flex: 1; }
 .dataset-archive-error { color: #c0392b; }
 .dataset-archive-empty { color: #9ca3af; font-style: italic; }
-.dataset-archive-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-.dataset-archive-table th, .dataset-archive-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; }
+.dataset-archive-table { font-size: 0.85rem; }
 .dataset-archive-col-select { width: 32px; }
 .dataset-archive-col-action { text-align: right; }
 .dataset-archive-col-sortable { cursor: pointer; user-select: none; }
 .dataset-archive-sort-indicator { color: #6b7280; font-size: 0.7rem; }
 .dataset-archive-last-badge { margin-left: 6px; padding: 1px 6px; background: #e8f5e9; color: #2e7d32; border-radius: 10px; font-size: 0.7rem; }
-.dataset-archive-download { padding: 5px 10px; background: #ecf0f1; color: #2c3e50; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
-.dataset-archive-download:hover { background: #dfe4e6; }
 .dataset-archive-pager { display: flex; gap: 12px; align-items: center; justify-content: center; margin-top: 12px; }
-.dataset-archive-page-btn { padding: 4px 10px; background: #ecf0f1; border: none; border-radius: 4px; cursor: pointer; }
-.dataset-archive-page-btn:disabled { color: #cbd5e1; cursor: not-allowed; }
 .dataset-archive-page-label { color: #6b7280; font-size: 0.85rem; }
 
-.dataset-examples-lang { margin-bottom: 12px; padding: 6px 10px; border: 1px solid #e9ecef; border-radius: 6px; font-size: 0.85rem; }
+.dataset-examples-lang { margin-bottom: 12px; }
 .dataset-example { margin-bottom: 14px; }
 .dataset-example-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.dataset-example-label { font-weight: 600; color: #2c3e50; font-size: 0.85rem; }
-.dataset-example-copy { padding: 3px 10px; background: #ecf0f1; color: #2c3e50; border: none; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+.dataset-example-label { font-weight: 600; color: var(--vbwd-heading, #2c3e50); font-size: 0.85rem; }
 .dataset-example-pre { margin: 0; padding: 12px; background: #1e293b; color: #e2e8f0; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; }
 .dataset-example-pre code { font-family: monospace; white-space: pre; }
 </style>

@@ -86,7 +86,7 @@ describe('DatasetAccessDetail — API URL + download + metadata + capped preview
 
   it('places the API examples section right after the key card (position 1)', async () => {
     const wrapper = await mountAccess();
-    const cards = wrapper.findAll('.dataset-access-card');
+    const cards = wrapper.findAll('.vbwd-card');
     // Card 0 = the API-key card; card 1 = the API usage examples.
     expect(cards[1].attributes('data-testid')).toBe('dataset-api-examples');
   });
