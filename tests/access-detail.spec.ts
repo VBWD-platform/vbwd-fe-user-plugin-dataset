@@ -72,15 +72,23 @@ describe('DatasetAccessDetail — API URL + download + metadata + capped preview
     mockListSnapshots.mockResolvedValue([]);
   });
 
-  it('shows the scoped API URL and the user key carrying the dataset:read scope', async () => {
+  it('shows the user key carrying the dataset:read scope (no standalone scoped-URL line)', async () => {
     const wrapper = await mountAccess();
 
-    const apiUrl = wrapper.find('[data-testid="dataset-access-api-url"]');
-    expect(apiUrl.text()).toContain('/api/v1/dataset/air-quality/data');
+    // The redundant scoped-URL code line was removed — the API examples section
+    // now carries every URL. The key card stays at the top.
+    expect(wrapper.find('[data-testid="dataset-access-api-url"]').exists()).toBe(false);
 
     const keys = wrapper.findAll('[data-testid="dataset-access-api-key"]');
     expect(keys).toHaveLength(1);
     expect(keys[0].text()).toContain('vbwd_ab12');
+  });
+
+  it('places the API examples section right after the key card (position 1)', async () => {
+    const wrapper = await mountAccess();
+    const cards = wrapper.findAll('.dataset-access-card');
+    // Card 0 = the API-key card; card 1 = the API usage examples.
+    expect(cards[1].attributes('data-testid')).toBe('dataset-api-examples');
   });
 
   it('downloads the snapshot as an auth-carrying blob (not a bare anchor)', async () => {

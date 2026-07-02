@@ -14,19 +14,11 @@
       {{ meta?.slug || slug }}
     </h1>
 
-    <!-- (a) Scoped API URL + the user's API key -->
+    <!-- (0) The user's API key -->
     <section class="dataset-access-card">
       <h2 class="dataset-access-heading">
-        {{ $t('dataset.access.apiUrl') }}
-      </h2>
-      <code
-        class="dataset-access-url"
-        data-testid="dataset-access-api-url"
-      >GET {{ apiUrl }}</code>
-
-      <h3 class="dataset-access-subheading">
         {{ $t('dataset.access.apiKey') }}
-      </h3>
+      </h2>
       <ul
         v-if="datasetKeys.length"
         class="dataset-access-keys"
@@ -53,6 +45,54 @@
       >
         {{ $t('dataset.access.manageKeys') }}
       </router-link>
+    </section>
+
+    <!-- (1) API usage examples -->
+    <section
+      class="dataset-access-card"
+      data-testid="dataset-api-examples"
+    >
+      <h2 class="dataset-access-heading">
+        {{ $t('dataset.access.examples.title') }}
+      </h2>
+
+      <select
+        v-model="exampleLang"
+        class="dataset-examples-lang"
+        data-testid="dataset-examples-lang"
+      >
+        <option value="curl">
+          {{ $t('dataset.access.examples.langCurl') }}
+        </option>
+        <option value="php">
+          {{ $t('dataset.access.examples.langPhp') }}
+        </option>
+        <option value="javascript">
+          {{ $t('dataset.access.examples.langJavascript') }}
+        </option>
+        <option value="python">
+          {{ $t('dataset.access.examples.langPython') }}
+        </option>
+      </select>
+
+      <div
+        v-for="operation in exampleOperations"
+        :key="operation.key"
+        class="dataset-example"
+      >
+        <div class="dataset-example-head">
+          <span class="dataset-example-label">{{ $t(operation.labelKey) }}</span>
+          <button
+            type="button"
+            class="dataset-example-copy"
+            data-testid="dataset-example-copy"
+            @click="copySnippet(operation.snippet)"
+          >
+            {{ $t('dataset.access.examples.copy') }}
+          </button>
+        </div>
+        <pre class="dataset-example-pre"><code data-testid="dataset-example-snippet">{{ operation.snippet }}</code></pre>
+      </div>
     </section>
 
     <!-- (b) Browser download button -->
@@ -213,54 +253,6 @@
       </template>
     </section>
 
-    <!-- (d) API usage examples -->
-    <section
-      class="dataset-access-card"
-      data-testid="dataset-api-examples"
-    >
-      <h2 class="dataset-access-heading">
-        {{ $t('dataset.access.examples.title') }}
-      </h2>
-
-      <select
-        v-model="exampleLang"
-        class="dataset-examples-lang"
-        data-testid="dataset-examples-lang"
-      >
-        <option value="curl">
-          {{ $t('dataset.access.examples.langCurl') }}
-        </option>
-        <option value="php">
-          {{ $t('dataset.access.examples.langPhp') }}
-        </option>
-        <option value="javascript">
-          {{ $t('dataset.access.examples.langJavascript') }}
-        </option>
-        <option value="python">
-          {{ $t('dataset.access.examples.langPython') }}
-        </option>
-      </select>
-
-      <div
-        v-for="operation in exampleOperations"
-        :key="operation.key"
-        class="dataset-example"
-      >
-        <div class="dataset-example-head">
-          <span class="dataset-example-label">{{ $t(operation.labelKey) }}</span>
-          <button
-            type="button"
-            class="dataset-example-copy"
-            data-testid="dataset-example-copy"
-            @click="copySnippet(operation.snippet)"
-          >
-            {{ $t('dataset.access.examples.copy') }}
-          </button>
-        </div>
-        <pre class="dataset-example-pre"><code data-testid="dataset-example-snippet">{{ operation.snippet }}</code></pre>
-      </div>
-    </section>
-
     <!-- (e) Issue metadata -->
     <section
       v-if="meta"
@@ -334,8 +326,6 @@ const props = defineProps<{ slug: string }>();
 const apiKeysStore = useApiKeysStore();
 const meta = ref<DatasetMeta | null>(null);
 const preview = ref<DatasetPreview>({ columns: [], rows: [] });
-
-const apiUrl = computed(() => datasetApi.dataUrl(props.slug));
 
 // --- Archive table state --------------------------------------------------
 const snapshots = ref<DatasetSnapshot[]>([]);
