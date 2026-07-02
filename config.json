@@ -1,0 +1,17 @@
+{
+  "debug_mode": {
+    "type": "boolean",
+    "default": false,
+    "description": "Enable verbose logging for the datasets plugin"
+  },
+  "datasets_per_page": {
+    "type": "number",
+    "default": 20,
+    "description": "Number of datasets shown per Data-store catalogue page"
+  },
+  "show_in_nav": {
+    "type": "boolean",
+    "default": true,
+    "description": "Show the Datasets items in the user navigation"
+  }
+}

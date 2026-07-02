@@ -1,0 +1,38 @@
+{
+  "dataset": {
+    "title": "Data Store",
+    "search": "Search datasets...",
+    "loading": "Loading...",
+    "error": "Something went wrong.",
+    "notFound": "Dataset not found.",
+    "noDatasets": "No datasets found.",
+    "by": "by",
+    "getDataset": "Get Dataset",
+    "nav": {
+      "myDatasets": "My datasets",
+      "dataStore": "Data store"
+    },
+    "myDatasets": {
+      "title": "My datasets",
+      "empty": "You have no dataset access yet.",
+      "browse": "Browse the Data store",
+      "download": "Download latest",
+      "manageKeys": "Manage API keys"
+    },
+    "access": {
+      "apiUrl": "Scoped API URL",
+      "apiKey": "Your API key",
+      "noKey": "You have no API key with the dataset:read scope yet.",
+      "manageKeys": "Manage API keys",
+      "download": "Download latest snapshot",
+      "metadata": "Issue metadata",
+      "source": "Source",
+      "takenAt": "Taken at",
+      "size": "Size (bytes)",
+      "checksum": "Checksum",
+      "attribution": "Attribution",
+      "preview": "Preview (first 100 rows)",
+      "previewEmpty": "No preview available."
+    }
+  }
+}

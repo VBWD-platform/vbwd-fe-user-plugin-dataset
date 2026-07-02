@@ -1,0 +1,101 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { mount, flushPromises, RouterLinkStub } from '@vue/test-utils';
+
+const mockGetMeta = vi.fn();
+const mockGetPreview = vi.fn();
+const mockFetchKeys = vi.fn();
+
+vi.mock('../src/api/datasetApi', () => ({
+  datasetApi: {
+    getMeta: (...args: unknown[]) => mockGetMeta(...args),
+    getPreview: (...args: unknown[]) => mockGetPreview(...args),
+    dataUrl: (slug: string) => `/api/v1/dataset/${slug}/data`,
+    downloadUrl: (slug: string) => `/api/v1/dataset/${slug}/download`,
+  },
+}));
+
+// The access page reads the caller's own API keys from the core self-service
+// store; stub it so the component mounts without the app's pinia/API.
+const apiKeysState = {
+  keys: [
+    { id: 'k1', label: 'CI key', key_prefix: 'vbwd_ab12', scopes: ['dataset:read'], ip_whitelist: [], is_active: true },
+    { id: 'k2', label: 'Other', key_prefix: 'vbwd_zz99', scopes: ['user:read'], ip_whitelist: [], is_active: true },
+  ],
+  fetchKeys: mockFetchKeys,
+};
+vi.mock('@/stores/apiKeys', () => ({
+  useApiKeysStore: () => apiKeysState,
+}));
+
+import DatasetAccessDetail from '../src/components/DatasetAccessDetail.vue';
+
+const tFallback = (key: string) => key;
+
+function makeRows(count: number): Array<Array<string | number | null>> {
+  return Array.from({ length: count }, (_unused, index) => [index, `city-${index}`, index * 2]);
+}
+
+async function mountAccess() {
+  const wrapper = mount(DatasetAccessDetail, {
+    props: { slug: 'air-quality' },
+    global: {
+      mocks: { $t: tFallback },
+      stubs: { RouterLink: RouterLinkStub },
+    },
+  });
+  await flushPromises();
+  return wrapper;
+}
+
+describe('DatasetAccessDetail — API URL + download + metadata + capped preview', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFetchKeys.mockResolvedValue(undefined);
+    mockGetMeta.mockResolvedValue({
+      slug: 'air-quality',
+      taken_at: '2026-06-30-12-00',
+      source: 'European Environment Agency',
+      size_bytes: 20480,
+      checksum: 'sha256:abcd',
+      attribution: 'CC-BY 4.0',
+    });
+    mockGetPreview.mockResolvedValue({
+      columns: ['id', 'city', 'value'],
+      rows: makeRows(150),
+    });
+  });
+
+  it('shows the scoped API URL and the user key carrying the dataset:read scope', async () => {
+    const wrapper = await mountAccess();
+
+    const apiUrl = wrapper.find('[data-testid="dataset-access-api-url"]');
+    expect(apiUrl.text()).toContain('/api/v1/dataset/air-quality/data');
+
+    const keys = wrapper.findAll('[data-testid="dataset-access-api-key"]');
+    expect(keys).toHaveLength(1);
+    expect(keys[0].text()).toContain('vbwd_ab12');
+  });
+
+  it('renders a browser download button pointing at the download endpoint', async () => {
+    const wrapper = await mountAccess();
+    const download = wrapper.find('[data-testid="dataset-access-download"]');
+    expect(download.attributes('href')).toBe('/api/v1/dataset/air-quality/download');
+    expect(download.attributes('download')).toBeDefined();
+  });
+
+  it('renders the issue metadata block', async () => {
+    const wrapper = await mountAccess();
+    const metaBlock = wrapper.find('[data-testid="dataset-access-meta"]');
+    expect(metaBlock.exists()).toBe(true);
+    expect(metaBlock.text()).toContain('European Environment Agency');
+    expect(metaBlock.text()).toContain('sha256:abcd');
+  });
+
+  it('renders the preview grid capped at 100 rows even when more are returned', async () => {
+    const wrapper = await mountAccess();
+    const grid = wrapper.find('[data-testid="dataset-preview-grid"]');
+    expect(grid.exists()).toBe(true);
+    const rows = wrapper.findAll('[data-testid="dataset-preview-row"]');
+    expect(rows.length).toBe(100);
+  });
+});

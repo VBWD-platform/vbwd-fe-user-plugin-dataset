@@ -1,0 +1,31 @@
+{
+  "tabs": [
+    {
+      "id": "general",
+      "label": "General",
+      "fields": [
+        {
+          "key": "debug_mode",
+          "label": "Debug Mode",
+          "component": "checkbox",
+          "description": "Enable verbose logging for the datasets plugin"
+        },
+        {
+          "key": "datasets_per_page",
+          "label": "Datasets Per Page",
+          "component": "input",
+          "inputType": "number",
+          "min": 1,
+          "max": 100,
+          "description": "Number of datasets shown per Data-store catalogue page"
+        },
+        {
+          "key": "show_in_nav",
+          "label": "Show in Navigation",
+          "component": "checkbox",
+          "description": "Show the Datasets items in the user navigation menu"
+        }
+      ]
+    }
+  ]
+}
