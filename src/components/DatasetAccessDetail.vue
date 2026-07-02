@@ -67,7 +67,201 @@
       </button>
     </section>
 
-    <!-- (c) Issue metadata -->
+    <!-- (c) Downloadable archive of snapshot versions -->
+    <section
+      class="dataset-access-card"
+      data-testid="dataset-archive"
+    >
+      <h2 class="dataset-access-heading">
+        {{ $t('dataset.access.archive.title') }}
+      </h2>
+
+      <div class="dataset-archive-toolbar">
+        <input
+          v-model="archiveSearch"
+          type="search"
+          class="dataset-archive-search"
+          data-testid="dataset-archive-search"
+          :placeholder="$t('dataset.access.archive.searchPlaceholder')"
+        >
+        <button
+          type="button"
+          class="dataset-archive-bulk"
+          data-testid="dataset-archive-bulk"
+          :disabled="!selectedIds.length"
+          @click="downloadSelected"
+        >
+          {{ $t('dataset.access.archive.downloadSelected') }}
+        </button>
+      </div>
+
+      <p
+        v-if="archiveError"
+        class="dataset-archive-error"
+        data-testid="dataset-archive-error"
+      >
+        {{ $t('dataset.access.archive.error') }}
+      </p>
+      <p
+        v-else-if="!snapshots.length"
+        class="dataset-archive-empty"
+        data-testid="dataset-archive-empty"
+      >
+        {{ $t('dataset.access.archive.empty') }}
+      </p>
+      <template v-else>
+        <table class="dataset-archive-table">
+          <thead>
+            <tr>
+              <th class="dataset-archive-col-select">
+                <input
+                  type="checkbox"
+                  data-testid="dataset-archive-select-all"
+                  :checked="allOnPageSelected"
+                  @change="toggleSelectAll(($event.target as HTMLInputElement).checked)"
+                >
+              </th>
+              <th
+                class="dataset-archive-col-sortable"
+                data-testid="dataset-archive-sort-taken_at"
+                @click="sortBy('taken_at')"
+              >
+                {{ $t('dataset.access.archive.takenAt') }}
+                <span
+                  v-if="sortColumn === 'taken_at'"
+                  class="dataset-archive-sort-indicator"
+                >{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+              </th>
+              <th
+                class="dataset-archive-col-sortable"
+                data-testid="dataset-archive-sort-size"
+                @click="sortBy('size')"
+              >
+                {{ $t('dataset.access.archive.size') }}
+                <span
+                  v-if="sortColumn === 'size'"
+                  class="dataset-archive-sort-indicator"
+                >{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+              </th>
+              <th>{{ $t('dataset.access.archive.backend') }}</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="snapshot in pagedSnapshots"
+              :key="snapshot.id"
+              data-testid="dataset-archive-row"
+            >
+              <td class="dataset-archive-col-select">
+                <input
+                  v-model="selection[snapshot.id]"
+                  type="checkbox"
+                  data-testid="dataset-archive-select"
+                >
+              </td>
+              <td>
+                {{ formatTakenAt(snapshot.taken_at) }}
+                <span
+                  v-if="snapshot.is_last"
+                  class="dataset-archive-last-badge"
+                  data-testid="dataset-archive-last-badge"
+                >{{ $t('dataset.access.archive.last') }}</span>
+              </td>
+              <td>{{ formatSize(snapshot.size_bytes) }}</td>
+              <td>{{ snapshot.storage_backend }}</td>
+              <td class="dataset-archive-col-action">
+                <button
+                  type="button"
+                  class="dataset-archive-download"
+                  data-testid="dataset-archive-download"
+                  @click="downloadOne(snapshot.id)"
+                >
+                  {{ $t('dataset.access.archive.download') }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="dataset-archive-pager">
+          <button
+            type="button"
+            class="dataset-archive-page-btn"
+            data-testid="dataset-archive-prev"
+            :disabled="currentPage <= 1"
+            @click="goToPage(currentPage - 1)"
+          >
+            &larr;
+          </button>
+          <span
+            class="dataset-archive-page-label"
+            data-testid="dataset-archive-page"
+          >
+            {{ $t('dataset.access.archive.page') }} {{ currentPage }} / {{ totalPages }}
+          </span>
+          <button
+            type="button"
+            class="dataset-archive-page-btn"
+            data-testid="dataset-archive-next"
+            :disabled="currentPage >= totalPages"
+            @click="goToPage(currentPage + 1)"
+          >
+            &rarr;
+          </button>
+        </div>
+      </template>
+    </section>
+
+    <!-- (d) API usage examples -->
+    <section
+      class="dataset-access-card"
+      data-testid="dataset-api-examples"
+    >
+      <h2 class="dataset-access-heading">
+        {{ $t('dataset.access.examples.title') }}
+      </h2>
+
+      <select
+        v-model="exampleLang"
+        class="dataset-examples-lang"
+        data-testid="dataset-examples-lang"
+      >
+        <option value="curl">
+          {{ $t('dataset.access.examples.langCurl') }}
+        </option>
+        <option value="php">
+          {{ $t('dataset.access.examples.langPhp') }}
+        </option>
+        <option value="javascript">
+          {{ $t('dataset.access.examples.langJavascript') }}
+        </option>
+        <option value="python">
+          {{ $t('dataset.access.examples.langPython') }}
+        </option>
+      </select>
+
+      <div
+        v-for="operation in exampleOperations"
+        :key="operation.key"
+        class="dataset-example"
+      >
+        <div class="dataset-example-head">
+          <span class="dataset-example-label">{{ $t(operation.labelKey) }}</span>
+          <button
+            type="button"
+            class="dataset-example-copy"
+            data-testid="dataset-example-copy"
+            @click="copySnippet(operation.snippet)"
+          >
+            {{ $t('dataset.access.examples.copy') }}
+          </button>
+        </div>
+        <pre class="dataset-example-pre"><code data-testid="dataset-example-snippet">{{ operation.snippet }}</code></pre>
+      </div>
+    </section>
+
+    <!-- (e) Issue metadata -->
     <section
       v-if="meta"
       class="dataset-access-card"
@@ -100,7 +294,7 @@
       </dl>
     </section>
 
-    <!-- (d) First-100-rows spreadsheet preview -->
+    <!-- (f) First-100-rows spreadsheet preview -->
     <section class="dataset-access-card">
       <h2 class="dataset-access-heading">
         {{ $t('dataset.access.preview') }}
@@ -114,17 +308,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import type { ApiKey } from 'vbwd-view-component';
 import { useApiKeysStore } from '@/stores/apiKeys';
 import {
   datasetApi,
   type DatasetMeta,
   type DatasetPreview,
+  type DatasetSnapshot,
 } from '../api/datasetApi';
 import DatasetPreviewGrid from './DatasetPreviewGrid.vue';
 
 const DATASET_SCOPE = 'dataset:read';
+const ARCHIVE_PAGE_SIZE = 10;
+const BYTES_PER_KILOBYTE = 1024;
+const API_KEY_PLACEHOLDER = 'YOUR_API_KEY';
+const SNAPSHOT_ID_PLACEHOLDER = 'SNAPSHOT_ID';
+
+type SortColumn = 'taken_at' | 'size';
+type SortDirection = 'asc' | 'desc';
+type ExampleLanguage = 'curl' | 'php' | 'javascript' | 'python';
 
 const props = defineProps<{ slug: string }>();
 
@@ -134,17 +337,203 @@ const preview = ref<DatasetPreview>({ columns: [], rows: [] });
 
 const apiUrl = computed(() => datasetApi.dataUrl(props.slug));
 
-async function download(): Promise<void> {
-  // `/download` is `@require_auth` with a Bearer session token, which a plain
-  // `<a href>` navigation can't send (→ 401). Fetch the blob with the auth
-  // header, then trigger the browser download from an object-URL.
-  const { blob, filename } = await datasetApi.download(props.slug);
+// --- Archive table state --------------------------------------------------
+const snapshots = ref<DatasetSnapshot[]>([]);
+const archiveError = ref(false);
+const archiveSearch = ref('');
+const sortColumn = ref<SortColumn>('taken_at');
+const sortDirection = ref<SortDirection>('desc');
+const currentPage = ref(1);
+const selection = reactive<Record<string, boolean>>({});
+
+const filteredSnapshots = computed<DatasetSnapshot[]>(() => {
+  const term = archiveSearch.value.trim().toLowerCase();
+  if (!term) return snapshots.value;
+  return snapshots.value.filter((snapshot) =>
+    `${snapshot.taken_at} ${snapshot.storage_backend}`.toLowerCase().includes(term),
+  );
+});
+
+const sortedSnapshots = computed<DatasetSnapshot[]>(() => {
+  const rows = [...filteredSnapshots.value];
+  rows.sort((left, right) => {
+    let comparison: number;
+    if (sortColumn.value === 'size') {
+      comparison = left.size_bytes - right.size_bytes;
+    } else {
+      comparison = left.taken_at.localeCompare(right.taken_at);
+    }
+    return sortDirection.value === 'asc' ? comparison : -comparison;
+  });
+  return rows;
+});
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(sortedSnapshots.value.length / ARCHIVE_PAGE_SIZE)),
+);
+
+const pagedSnapshots = computed<DatasetSnapshot[]>(() => {
+  const start = (currentPage.value - 1) * ARCHIVE_PAGE_SIZE;
+  return sortedSnapshots.value.slice(start, start + ARCHIVE_PAGE_SIZE);
+});
+
+const selectedIds = computed<string[]>(() =>
+  Object.keys(selection).filter((id) => selection[id]),
+);
+
+const allOnPageSelected = computed(
+  () =>
+    pagedSnapshots.value.length > 0 &&
+    pagedSnapshots.value.every((snapshot) => selection[snapshot.id]),
+);
+
+function sortBy(column: SortColumn): void {
+  if (sortColumn.value === column) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortColumn.value = column;
+    sortDirection.value = 'asc';
+  }
+}
+
+function goToPage(page: number): void {
+  currentPage.value = Math.min(Math.max(1, page), totalPages.value);
+}
+
+function toggleSelectAll(checked: boolean): void {
+  pagedSnapshots.value.forEach((snapshot) => {
+    selection[snapshot.id] = checked;
+  });
+}
+
+// Changing the search resets to the first page so the pager stays in bounds.
+watch(archiveSearch, () => {
+  currentPage.value = 1;
+});
+
+function formatSize(bytes: number): string {
+  if (bytes < BYTES_PER_KILOBYTE) return `${bytes} B`;
+  const kilobytes = bytes / BYTES_PER_KILOBYTE;
+  if (kilobytes < BYTES_PER_KILOBYTE) return `${kilobytes.toFixed(1)} KB`;
+  return `${(kilobytes / BYTES_PER_KILOBYTE).toFixed(1)} MB`;
+}
+
+function formatTakenAt(value: string): string {
+  return value.replace('T', ' ').replace('Z', '').trim();
+}
+
+function triggerBlobDownload(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
   anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+async function download(): Promise<void> {
+  // `/download` is `@require_auth` with a Bearer session token, which a plain
+  // `<a href>` navigation can't send (→ 401). Fetch the blob with the auth
+  // header, then trigger the browser download from an object-URL.
+  const { blob, filename } = await datasetApi.download(props.slug);
+  triggerBlobDownload(blob, filename);
+}
+
+async function downloadOne(snapshotId: string): Promise<void> {
+  const { blob, filename } = await datasetApi.downloadSnapshot(props.slug, snapshotId);
+  triggerBlobDownload(blob, filename);
+}
+
+async function downloadSelected(): Promise<void> {
+  // Sequential so we don't fire a burst of authed requests at once.
+  for (const snapshotId of selectedIds.value) {
+    const { blob, filename } = await datasetApi.downloadSnapshot(props.slug, snapshotId);
+    triggerBlobDownload(blob, filename);
+  }
+}
+
+// --- API usage examples ---------------------------------------------------
+const exampleLang = ref<ExampleLanguage>('curl');
+
+const exampleBaseUrl = computed(() => {
+  const origin =
+    typeof window !== 'undefined' && window.location ? window.location.origin : '';
+  return `${origin}/api/v1/dataset/${props.slug}`;
+});
+
+interface ExampleOperation {
+  key: string;
+  labelKey: string;
+  url: string;
+  isDownload: boolean;
+  snippet: string;
+}
+
+function buildSnippet(language: ExampleLanguage, url: string, isDownload: boolean): string {
+  switch (language) {
+    case 'php':
+      return [
+        '<?php',
+        '$context = stream_context_create([',
+        "    'http' => ['header' => 'X-API-Key: " + API_KEY_PLACEHOLDER + "'],",
+        ']);',
+        `$data = file_get_contents('${url}', false, $context);`,
+      ].join('\n');
+    case 'javascript':
+      return [
+        `fetch('${url}', {`,
+        `  headers: { 'X-API-Key': '${API_KEY_PLACEHOLDER}' },`,
+        '})',
+        '  .then((response) => response.blob())',
+        '  .then((body) => console.log(body));',
+      ].join('\n');
+    case 'python':
+      return [
+        'import requests',
+        '',
+        `response = requests.get('${url}', headers={'X-API-Key': '${API_KEY_PLACEHOLDER}'})`,
+        'print(response.content)',
+      ].join('\n');
+    case 'curl':
+    default:
+      return isDownload
+        ? `curl -OJ -H "X-API-Key: ${API_KEY_PLACEHOLDER}" "${url}"`
+        : `curl -H "X-API-Key: ${API_KEY_PLACEHOLDER}" "${url}"`;
+  }
+}
+
+const exampleOperations = computed<ExampleOperation[]>(() => {
+  const base = exampleBaseUrl.value;
+  const definitions = [
+    {
+      key: 'latest',
+      labelKey: 'dataset.access.examples.opLatest',
+      url: `${base}/data`,
+      isDownload: true,
+    },
+    {
+      key: 'list',
+      labelKey: 'dataset.access.examples.opList',
+      url: `${base}/snapshots`,
+      isDownload: false,
+    },
+    {
+      key: 'exact',
+      labelKey: 'dataset.access.examples.opExact',
+      url: `${base}/snapshots/${SNAPSHOT_ID_PLACEHOLDER}/download`,
+      isDownload: true,
+    },
+  ];
+  return definitions.map((definition) => ({
+    ...definition,
+    snippet: buildSnippet(exampleLang.value, definition.url, definition.isDownload),
+  }));
+});
+
+function copySnippet(snippet: string): void {
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    navigator.clipboard.writeText(snippet).catch(() => undefined);
+  }
 }
 
 // Show the caller's own keys that carry the dataset read scope so they know
@@ -169,10 +558,21 @@ async function loadPreview() {
   }
 }
 
+async function loadSnapshots() {
+  try {
+    snapshots.value = await datasetApi.listSnapshots(props.slug);
+    archiveError.value = false;
+  } catch {
+    snapshots.value = [];
+    archiveError.value = true;
+  }
+}
+
 onMounted(() => {
   apiKeysStore.fetchKeys().catch(() => undefined);
   loadMeta();
   loadPreview();
+  loadSnapshots();
 });
 </script>
 
@@ -197,4 +597,32 @@ onMounted(() => {
 .dataset-access-meta-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
 .dataset-access-meta-row dt { color: #6b7280; }
 .dataset-access-meta-row dd { margin: 0; color: #2c3e50; font-weight: 500; word-break: break-all; }
+
+.dataset-archive-toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+.dataset-archive-search { flex: 1; padding: 8px 10px; border: 1px solid #e9ecef; border-radius: 6px; font-size: 0.85rem; }
+.dataset-archive-bulk { padding: 8px 14px; background: #3498db; color: #fff; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer; }
+.dataset-archive-bulk:disabled { background: #cbd5e1; cursor: not-allowed; }
+.dataset-archive-error { color: #c0392b; }
+.dataset-archive-empty { color: #9ca3af; font-style: italic; }
+.dataset-archive-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.dataset-archive-table th, .dataset-archive-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; }
+.dataset-archive-col-select { width: 32px; }
+.dataset-archive-col-action { text-align: right; }
+.dataset-archive-col-sortable { cursor: pointer; user-select: none; }
+.dataset-archive-sort-indicator { color: #6b7280; font-size: 0.7rem; }
+.dataset-archive-last-badge { margin-left: 6px; padding: 1px 6px; background: #e8f5e9; color: #2e7d32; border-radius: 10px; font-size: 0.7rem; }
+.dataset-archive-download { padding: 5px 10px; background: #ecf0f1; color: #2c3e50; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
+.dataset-archive-download:hover { background: #dfe4e6; }
+.dataset-archive-pager { display: flex; gap: 12px; align-items: center; justify-content: center; margin-top: 12px; }
+.dataset-archive-page-btn { padding: 4px 10px; background: #ecf0f1; border: none; border-radius: 4px; cursor: pointer; }
+.dataset-archive-page-btn:disabled { color: #cbd5e1; cursor: not-allowed; }
+.dataset-archive-page-label { color: #6b7280; font-size: 0.85rem; }
+
+.dataset-examples-lang { margin-bottom: 12px; padding: 6px 10px; border: 1px solid #e9ecef; border-radius: 6px; font-size: 0.85rem; }
+.dataset-example { margin-bottom: 14px; }
+.dataset-example-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.dataset-example-label { font-weight: 600; color: #2c3e50; font-size: 0.85rem; }
+.dataset-example-copy { padding: 3px 10px; background: #ecf0f1; color: #2c3e50; border: none; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+.dataset-example-pre { margin: 0; padding: 12px; background: #1e293b; color: #e2e8f0; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; }
+.dataset-example-pre code { font-family: monospace; white-space: pre; }
 </style>

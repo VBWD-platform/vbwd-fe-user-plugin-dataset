@@ -5,6 +5,8 @@ const mockGetMeta = vi.fn();
 const mockGetPreview = vi.fn();
 const mockFetchKeys = vi.fn();
 const mockDownload = vi.fn();
+const mockListSnapshots = vi.fn();
+const mockDownloadSnapshot = vi.fn();
 
 vi.mock('../src/api/datasetApi', () => ({
   datasetApi: {
@@ -13,6 +15,8 @@ vi.mock('../src/api/datasetApi', () => ({
     dataUrl: (slug: string) => `/api/v1/dataset/${slug}/data`,
     downloadUrl: (slug: string) => `/api/v1/dataset/${slug}/download`,
     download: (...args: unknown[]) => mockDownload(...args),
+    listSnapshots: (...args: unknown[]) => mockListSnapshots(...args),
+    downloadSnapshot: (...args: unknown[]) => mockDownloadSnapshot(...args),
   },
 }));
 
@@ -65,6 +69,7 @@ describe('DatasetAccessDetail — API URL + download + metadata + capped preview
       columns: ['id', 'city', 'value'],
       rows: makeRows(150),
     });
+    mockListSnapshots.mockResolvedValue([]);
   });
 
   it('shows the scoped API URL and the user key carrying the dataset:read scope', async () => {

@@ -32,7 +32,31 @@
       "checksum": "Checksum",
       "attribution": "Attribution",
       "preview": "Preview (first 100 rows)",
-      "previewEmpty": "No preview available."
+      "previewEmpty": "No preview available.",
+      "archive": {
+        "title": "Archive (snapshot versions)",
+        "searchPlaceholder": "Search by date or backend…",
+        "takenAt": "Taken at",
+        "size": "Size",
+        "backend": "Backend",
+        "download": "Download",
+        "downloadSelected": "Download selected",
+        "last": "last",
+        "page": "Page",
+        "empty": "No archived snapshots yet.",
+        "error": "Could not load the archive. Please try again."
+      },
+      "examples": {
+        "title": "API usage examples",
+        "langCurl": "curl",
+        "langPhp": "PHP",
+        "langJavascript": "JavaScript",
+        "langPython": "Python",
+        "opLatest": "Download latest",
+        "opList": "List archive (versions)",
+        "opExact": "Download exact archive",
+        "copy": "Copy"
+      }
     }
   }
 }

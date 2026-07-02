@@ -73,6 +73,17 @@ export interface DatasetPreview {
   rows: Array<Array<string | number | null>>;
 }
 
+/** One archived snapshot version of a dataset (the downloadable archive table). */
+export interface DatasetSnapshot {
+  id: string;
+  taken_at: string;
+  size_bytes: number;
+  ext: string;
+  checksum: string;
+  storage_backend: string;
+  is_last: boolean;
+}
+
 export const datasetApi = {
   listDatasets(params: Record<string, string> = {}): Promise<DatasetPaginated<DatasetListItem>> {
     return get(`${API}`, params);
@@ -115,6 +126,26 @@ export const datasetApi = {
     const disposition = response.headers.get('Content-Disposition') || '';
     const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
     const filename = match ? decodeURIComponent(match[1]) : slug;
+    return { blob: await response.blob(), filename };
+  },
+  /** The dataset's archived snapshot versions (session-auth or X-API-Key). */
+  async listSnapshots(slug: string): Promise<DatasetSnapshot[]> {
+    const payload = await get<{ snapshots: DatasetSnapshot[] }>(`${API}/${slug}/snapshots`);
+    return payload.snapshots;
+  },
+  /**
+   * Fetch one exact archived snapshot as a Blob. Same auth story as `download`
+   * — the `/download` route is `@require_auth`, so fetch with the auth header
+   * and hand back a Blob the caller turns into an object-URL download.
+   */
+  async downloadSnapshot(slug: string, snapshotId: string): Promise<{ blob: Blob; filename: string }> {
+    const response = await fetch(`${API}/${slug}/snapshots/${snapshotId}/download`, {
+      headers: authHeaders(),
+    });
+    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+    const disposition = response.headers.get('Content-Disposition') || '';
+    const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
+    const filename = match ? decodeURIComponent(match[1]) : snapshotId;
     return { blob: await response.blob(), filename };
   },
 };
