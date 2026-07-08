@@ -24,6 +24,28 @@ async function get<T>(url: string, params?: Record<string, string>): Promise<T> 
   return response.json();
 }
 
+/** Prefer the server-provided attachment name from Content-Disposition. */
+function filenameFromDisposition(response: Response, fallback: string): string {
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
+  return match ? decodeURIComponent(match[1]) : fallback;
+}
+
+/**
+ * Fetch an authed download as a Blob. The download routes are `@require_auth`
+ * with a Bearer session token that a plain `<a href>` navigation can't carry
+ * (→ 401), so we fetch with the auth header and hand back a Blob the caller
+ * turns into an object-URL download.
+ */
+async function downloadBlob(
+  url: string,
+  fallbackName: string,
+): Promise<{ blob: Blob; filename: string }> {
+  const response = await fetch(url, { headers: authHeaders() });
+  if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+  return { blob: await response.blob(), filename: filenameFromDisposition(response, fallbackName) };
+}
+
 export interface DatasetListItem {
   id: string;
   slug: string;
@@ -84,6 +106,22 @@ export interface DatasetSnapshot {
   is_last: boolean;
 }
 
+/**
+ * One file within an issue (S124). The primary data file is synthesised with
+ * the stable id `"primary"` and appears first; extra files (PDF report, charts,
+ * …) follow. `download_url` points at the per-file download route.
+ */
+export interface FileEntry {
+  id: string;
+  role: 'data' | 'document' | 'chart' | 'other';
+  filename: string;
+  ext: string;
+  content_type: string | null;
+  size_bytes: number;
+  checksum: string | null;
+  download_url: string;
+}
+
 export const datasetApi = {
   listDatasets(params: Record<string, string> = {}): Promise<DatasetPaginated<DatasetListItem>> {
     return get(`${API}`, params);
@@ -112,40 +150,42 @@ export const datasetApi = {
   downloadUrl(slug: string): string {
     return `${API}/${slug}/download`;
   },
-  /**
-   * Fetch the `last` snapshot as a Blob. The `/download` route is
-   * `@require_auth`, but the session token lives in localStorage and is sent as
-   * a `Bearer` header — a plain `<a href>` navigation can't carry it, so it
-   * would 401. Fetch with the auth header and hand back a Blob the caller turns
-   * into an object-URL download.
-   */
-  async download(slug: string): Promise<{ blob: Blob; filename: string }> {
-    const response = await fetch(`${API}/${slug}/download`, { headers: authHeaders() });
-    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-    // Prefer the server-provided filename from Content-Disposition.
-    const disposition = response.headers.get('Content-Disposition') || '';
-    const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
-    const filename = match ? decodeURIComponent(match[1]) : slug;
-    return { blob: await response.blob(), filename };
+  /** Fetch the `last` snapshot as an auth-carrying Blob (see `downloadBlob`). */
+  download(slug: string): Promise<{ blob: Blob; filename: string }> {
+    return downloadBlob(`${API}/${slug}/download`, slug);
   },
   /** The dataset's archived snapshot versions (session-auth or X-API-Key). */
   async listSnapshots(slug: string): Promise<DatasetSnapshot[]> {
     const payload = await get<{ snapshots: DatasetSnapshot[] }>(`${API}/${slug}/snapshots`);
     return payload.snapshots;
   },
+  /** Fetch one exact archived snapshot as an auth-carrying Blob. */
+  downloadSnapshot(slug: string, snapshotId: string): Promise<{ blob: Blob; filename: string }> {
+    return downloadBlob(`${API}/${slug}/snapshots/${snapshotId}/download`, snapshotId);
+  },
   /**
-   * Fetch one exact archived snapshot as a Blob. Same auth story as `download`
-   * — the `/download` route is `@require_auth`, so fetch with the auth header
-   * and hand back a Blob the caller turns into an object-URL download.
+   * List every file within one issue (S124): the primary data file first
+   * (id `"primary"`), then any extra files. Session-auth + entitlement gated.
    */
-  async downloadSnapshot(slug: string, snapshotId: string): Promise<{ blob: Blob; filename: string }> {
-    const response = await fetch(`${API}/${slug}/snapshots/${snapshotId}/download`, {
-      headers: authHeaders(),
-    });
-    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-    const disposition = response.headers.get('Content-Disposition') || '';
-    const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
-    const filename = match ? decodeURIComponent(match[1]) : snapshotId;
-    return { blob: await response.blob(), filename };
+  async listSnapshotFiles(slug: string, snapshotId: string): Promise<FileEntry[]> {
+    const payload = await get<{ files: FileEntry[]; total: number }>(
+      `${API}/${slug}/snapshots/${snapshotId}/files`,
+    );
+    return payload.files;
+  },
+  /** Fetch one file of an issue as an auth-carrying Blob (id may be `"primary"`). */
+  downloadSnapshotFile(
+    slug: string,
+    snapshotId: string,
+    fileId: string,
+  ): Promise<{ blob: Blob; filename: string }> {
+    return downloadBlob(`${API}/${slug}/snapshots/${snapshotId}/files/${fileId}/download`, fileId);
+  },
+  /** Fetch the whole issue (primary + every extra file) as a zip Blob. */
+  downloadIssueArchive(
+    slug: string,
+    snapshotId: string,
+  ): Promise<{ blob: Blob; filename: string }> {
+    return downloadBlob(`${API}/${slug}/snapshots/${snapshotId}/archive`, `${slug}.zip`);
   },
 };

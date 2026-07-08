@@ -56,6 +56,20 @@
         "opList": "List archive (versions)",
         "opExact": "Download exact archive",
         "copy": "Copy"
+      },
+      "files": {
+        "toggle": "Files",
+        "loading": "Loading files…",
+        "error": "Could not load the issue files.",
+        "empty": "No files in this issue.",
+        "download": "Download",
+        "downloadAll": "Download all (.zip)",
+        "role": {
+          "data": "data",
+          "document": "document",
+          "chart": "chart",
+          "other": "other"
+        }
       }
     }
   }

@@ -32,7 +32,21 @@
       "checksum": "Checksum",
       "attribution": "Attribution",
       "preview": "Preview (first 100 rows)",
-      "previewEmpty": "No preview available."
+      "previewEmpty": "No preview available.",
+      "files": {
+        "toggle": "Files",
+        "loading": "Loading files…",
+        "error": "Could not load the issue files.",
+        "empty": "No files in this issue.",
+        "download": "Download",
+        "downloadAll": "Download all (.zip)",
+        "role": {
+          "data": "data",
+          "document": "document",
+          "chart": "chart",
+          "other": "other"
+        }
+      }
     }
   }
 }
