@@ -33,6 +33,9 @@
       "attribution": "Attribution",
       "preview": "Preview (first 100 rows)",
       "previewEmpty": "No preview available.",
+      "latest": {
+        "title": "Latest issue files"
+      },
       "files": {
         "toggle": "Files",
         "loading": "Loading files…",

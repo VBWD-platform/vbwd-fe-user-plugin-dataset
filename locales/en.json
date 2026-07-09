@@ -57,6 +57,9 @@
         "opExact": "Download exact archive",
         "copy": "Copy"
       },
+      "latest": {
+        "title": "Latest issue files"
+      },
       "files": {
         "toggle": "Files",
         "loading": "Loading files…",

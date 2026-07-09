@@ -103,9 +103,12 @@ describe('DatasetAccessDetail — per-issue multi-file panel', () => {
     await flushPromises();
 
     expect(mockListSnapshotFiles).toHaveBeenCalledWith('air-quality', 'snap-1');
-    const rows = wrapper.findAll('[data-testid="dataset-issue-file-row"]');
+    // Scope to the expanded archive-row panel — the latest-issue block also
+    // renders an IssueFileList with the same testids elsewhere on the page.
+    const panel = wrapper.find('[data-testid="dataset-issue-files"]');
+    const rows = panel.findAll('[data-testid="dataset-issue-file-row"]');
     expect(rows.length).toBe(2);
-    const badges = wrapper.findAll('[data-testid="dataset-issue-file-role"]');
+    const badges = panel.findAll('[data-testid="dataset-issue-file-role"]');
     expect(badges[0].text()).toContain('data');
     expect(badges[1].text()).toContain('document');
     expect(rows[1].text()).toContain('report.pdf');
@@ -171,11 +174,16 @@ describe('DatasetAccessDetail — per-issue multi-file panel', () => {
 
     await toggle().trigger('click');
     await flushPromises();
-    expect(wrapper.findAll('[data-testid="dataset-issue-file-row"]').length).toBe(2);
+    // The archive-row panel appears with its file rows (the latest-issue block
+    // renders the same testids elsewhere, so assert on the panel container).
+    expect(wrapper.find('[data-testid="dataset-issue-files"]').exists()).toBe(true);
+    expect(
+      wrapper.find('[data-testid="dataset-issue-files"]').findAll('[data-testid="dataset-issue-file-row"]').length,
+    ).toBe(2);
 
     await toggle().trigger('click');
     await flushPromises();
-    expect(wrapper.findAll('[data-testid="dataset-issue-file-row"]').length).toBe(0);
+    expect(wrapper.find('[data-testid="dataset-issue-files"]').exists()).toBe(false);
   });
 
   it('shows an error state when listing the issue files fails', async () => {

@@ -95,8 +95,11 @@
       </div>
     </section>
 
-    <!-- (b) Browser download button -->
-    <section class="vbwd-card">
+    <!-- (b) Browser download button + the latest issue's files, surfaced inline -->
+    <section
+      class="vbwd-card"
+      data-testid="dataset-latest-issue"
+    >
       <button
         type="button"
         class="vbwd-btn vbwd-btn--primary"
@@ -105,6 +108,42 @@
       >
         {{ $t('dataset.access.download') }}
       </button>
+
+      <div
+        class="dataset-latest-files"
+        data-testid="dataset-latest-files"
+      >
+        <h2 class="vbwd-heading dataset-latest-files-heading">
+          {{ $t('dataset.access.latest.title') }}
+        </h2>
+        <p
+          v-if="latestFilesLoading"
+          class="dataset-issue-files-status"
+          data-testid="dataset-latest-files-loading"
+        >
+          {{ $t('dataset.access.files.loading') }}
+        </p>
+        <p
+          v-else-if="latestFilesError"
+          class="dataset-issue-files-status dataset-issue-files-status--error"
+          data-testid="dataset-latest-files-error"
+        >
+          {{ $t('dataset.access.files.error') }}
+        </p>
+        <p
+          v-else-if="!latestSnapshotId || !latestFiles.length"
+          class="dataset-issue-files-status"
+          data-testid="dataset-latest-files-empty"
+        >
+          {{ $t('dataset.access.files.empty') }}
+        </p>
+        <IssueFileList
+          v-else
+          :slug="slug"
+          :snapshot-id="latestSnapshotId"
+          :files="latestFiles"
+        />
+      </div>
     </section>
 
     <!-- (c) Downloadable archive of snapshot versions -->
@@ -256,40 +295,12 @@
                   >
                     {{ $t('dataset.access.files.empty') }}
                   </p>
-                  <template v-else>
-                    <ul class="dataset-issue-files-list">
-                      <li
-                        v-for="file in issueFiles"
-                        :key="file.id"
-                        class="dataset-issue-file"
-                        data-testid="dataset-issue-file-row"
-                      >
-                        <span
-                          class="dataset-issue-file-role"
-                          :class="`dataset-issue-file-role--${file.role}`"
-                          data-testid="dataset-issue-file-role"
-                        >{{ $t(`dataset.access.files.role.${file.role}`) }}</span>
-                        <span class="dataset-issue-file-name">{{ file.filename }}</span>
-                        <span class="dataset-issue-file-size">{{ formatSize(file.size_bytes) }}</span>
-                        <button
-                          type="button"
-                          class="vbwd-btn vbwd-btn--ghost vbwd-btn--sm dataset-issue-file-btn"
-                          data-testid="dataset-issue-file-download"
-                          @click="downloadIssueFile(snapshot.id, file.id)"
-                        >
-                          {{ $t('dataset.access.files.download') }}
-                        </button>
-                      </li>
-                    </ul>
-                    <button
-                      type="button"
-                      class="vbwd-btn vbwd-btn--primary vbwd-btn--sm dataset-issue-archive-btn"
-                      data-testid="dataset-issue-archive"
-                      @click="downloadIssueArchive(snapshot.id)"
-                    >
-                      {{ $t('dataset.access.files.downloadAll') }}
-                    </button>
-                  </template>
+                  <IssueFileList
+                    v-else
+                    :slug="slug"
+                    :snapshot-id="snapshot.id"
+                    :files="issueFiles"
+                  />
                 </td>
               </tr>
             </template>
@@ -383,6 +394,7 @@ import {
   type FileEntry,
 } from '../api/datasetApi';
 import DatasetPreviewGrid from './DatasetPreviewGrid.vue';
+import IssueFileList from './IssueFileList.vue';
 
 const DATASET_SCOPE = 'dataset:read';
 const ARCHIVE_PAGE_SIZE = 10;
@@ -545,14 +557,34 @@ async function toggleIssueFiles(snapshotId: string): Promise<void> {
   }
 }
 
-async function downloadIssueFile(snapshotId: string, fileId: string): Promise<void> {
-  const { blob, filename } = await datasetApi.downloadSnapshotFile(props.slug, snapshotId, fileId);
-  triggerBlobDownload(blob, filename);
-}
+// --- Latest issue files (S124 UX follow-up) -------------------------------
+// The current (is_last) issue's files are surfaced inline — no toggle click —
+// so entitled users see the latest file set immediately. Older issues stay
+// behind the per-row `Files` toggle above.
+const latestFiles = ref<FileEntry[]>([]);
+const latestFilesLoading = ref(false);
+const latestFilesError = ref(false);
 
-async function downloadIssueArchive(snapshotId: string): Promise<void> {
-  const { blob, filename } = await datasetApi.downloadIssueArchive(props.slug, snapshotId);
-  triggerBlobDownload(blob, filename);
+const latestSnapshotId = computed<string | null>(
+  () => snapshots.value.find((snapshot) => snapshot.is_last)?.id ?? null,
+);
+
+async function loadLatestIssueFiles(): Promise<void> {
+  const snapshotId = latestSnapshotId.value;
+  if (!snapshotId) {
+    latestFiles.value = [];
+    return;
+  }
+  latestFiles.value = [];
+  latestFilesError.value = false;
+  latestFilesLoading.value = true;
+  try {
+    latestFiles.value = await datasetApi.listSnapshotFiles(props.slug, snapshotId);
+  } catch {
+    latestFilesError.value = true;
+  } finally {
+    latestFilesLoading.value = false;
+  }
 }
 
 // --- API usage examples ---------------------------------------------------
@@ -669,6 +701,7 @@ async function loadSnapshots() {
     snapshots.value = [];
     archiveError.value = true;
   }
+  await loadLatestIssueFiles();
 }
 
 onMounted(() => {
@@ -714,16 +747,9 @@ onMounted(() => {
 .dataset-issue-files-row td { background: #f9fafb; padding: 10px 14px; }
 .dataset-issue-files-status { margin: 0; color: #6b7280; font-style: italic; }
 .dataset-issue-files-status--error { color: #c0392b; font-style: normal; }
-.dataset-issue-files-list { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.dataset-issue-file { display: flex; gap: 10px; align-items: center; }
-.dataset-issue-file-role { padding: 1px 8px; border-radius: 10px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.02em; background: #eef2f7; color: #475569; }
-.dataset-issue-file-role--data { background: #e8f5e9; color: #2e7d32; }
-.dataset-issue-file-role--document { background: #e3f2fd; color: #1565c0; }
-.dataset-issue-file-role--chart { background: #fff3e0; color: #e65100; }
-.dataset-issue-file-name { font-weight: 500; color: var(--vbwd-heading, #2c3e50); }
-.dataset-issue-file-size { color: #6b7280; font-size: 0.8rem; }
-.dataset-issue-file-btn { margin-left: auto; }
-.dataset-issue-archive-btn { margin-top: 4px; }
+
+.dataset-latest-files { margin-top: 16px; padding-top: 14px; border-top: 1px solid #f0f0f0; }
+.dataset-latest-files-heading { margin: 0 0 10px; }
 
 .dataset-examples-lang { margin-bottom: 12px; }
 .dataset-example { margin-bottom: 14px; }
