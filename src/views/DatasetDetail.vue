@@ -44,6 +44,15 @@
         {{ dataset.description }}
       </p>
 
+      <!-- The operator-attached CMS entity page (body + ordered blocks + scoped
+           CSS), rendered by the cms plugin's public presentational renderer. It
+           collapses to nothing on 404/absent, so it never breaks this page. -->
+      <EntityPageContent
+        v-if="dataset && dataset.id"
+        owner-type="dataset"
+        :owner-id="dataset.id"
+      />
+
       <div
         v-if="hasTagsOrCustomFields"
         class="dataset-tags-custom-fields"
@@ -67,6 +76,13 @@
 import { computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { TagChips, CustomFieldsDisplay } from 'vbwd-view-component';
+// Public presentational renderer from the cms plugin's package entry. The
+// documented S128 alias is `@plugins/cms`; it resolves for vue-tsc + the vite
+// runtime, but vitest.config.js aliases only `@`, so the plugin unit suite
+// cannot resolve `@plugins` (a host-owned vitest-alias seam). Until that seam
+// exists we import the cms public entry (plugins/cms/index.ts) by relative path
+// so the dataset plugin is unit-testable without touching host config.
+import { EntityPageContent } from '../../../cms';
 import { useDatasetStore } from '../stores/useDatasetStore';
 
 const route = useRoute();

@@ -21,6 +21,13 @@ vi.mock('vbwd-view-component', () => ({
   CustomFieldsDisplay: { template: '<div />' },
 }));
 
+// DatasetDetail now renders the cms plugin's public EntityPageContent renderer.
+// Stub the cms package entry so mounting the detail view here does not pull the
+// full cms module graph (host api client etc.) into this catalogue spec.
+vi.mock('../../cms', () => ({
+  EntityPageContent: { template: '<div />' },
+}));
+
 import DatasetCatalogue from '../src/views/DatasetCatalogue.vue';
 import DatasetDetail from '../src/views/DatasetDetail.vue';
 import { useDatasetStore } from '../src/stores/useDatasetStore';
