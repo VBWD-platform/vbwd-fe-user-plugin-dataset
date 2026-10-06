@@ -27,6 +27,11 @@ jobs:
       - name: Overlay plugin source
         run: cp -r plugin-src/. vbwd-fe-user/plugins/dataset/
 
+      # dataset imports the cms plugin (vueComponentRegistry, CmsPage, the cms
+      # barrel), so its specs cannot resolve without the cms peer checked out.
+      - name: Clone peer plugins
+        run: git clone --depth=1 -q https://github.com/VBWD-platform/vbwd-fe-user-plugin-cms.git vbwd-fe-user/plugins/cms
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
