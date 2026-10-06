@@ -10,7 +10,7 @@
       v-else-if="store.error || !dataset"
       class="dataset-error"
     >
-      {{ store.error || $t('dataset.notFound') }}
+      {{ $t('dataset.notFound') }}
     </div>
 
     <template v-else>

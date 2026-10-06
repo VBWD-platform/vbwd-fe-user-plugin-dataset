@@ -59,9 +59,9 @@ describe('DatasetCatalogue — Data store listing + category filter', () => {
     });
     await flushPromises();
 
-    // Filters the list by the dataset_category term (category_slug param).
+    // Filters the list by the dataset_category term (the API's `category` param).
     expect(fetchSpy).toHaveBeenCalled();
-    expect(fetchSpy.mock.calls[0][0]).toMatchObject({ category_slug: 'env' });
+    expect(fetchSpy.mock.calls[0][0]).toMatchObject({ category: 'env' });
 
     const cards = wrapper.findAll('[data-testid="dataset-card"]');
     expect(cards).toHaveLength(1);

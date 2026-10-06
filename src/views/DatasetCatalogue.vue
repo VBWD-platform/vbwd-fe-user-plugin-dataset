@@ -132,7 +132,7 @@ const categoryLabel = computed(() => {
 
 function loadDatasets() {
   const params: Record<string, string> = {
-    category_slug: categorySlug.value!,
+    category: categorySlug.value!,
     page: String(currentPage.value),
   };
   if (searchQuery.value) params.q = searchQuery.value;
